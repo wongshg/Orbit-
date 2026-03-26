@@ -1,0 +1,92 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function isValidStringLength(field, minLen, maxLen) {
+      return request.resource.data[field] is string &&
+             request.resource.data[field].size() >= minLen &&
+             request.resource.data[field].size() <= maxLen;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    function uidUnchanged() {
+      return !('userId' in request.resource.data) ||
+             request.resource.data.userId == request.auth.uid;
+    }
+
+    function uidNotModified() {
+      return !('userId' in request.resource.data) ||
+             request.resource.data.userId == resource.data.userId;
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    function isValidMatter() {
+      return hasRequiredFields(['id', 'title', 'type', 'createdAt', 'lastUpdated', 'stages', 'archived', 'judgmentTimeline', 'userId']) &&
+             isValidStringLength('title', 1, 200) &&
+             isValidStringLength('type', 1, 100) &&
+             request.resource.data.createdAt is number &&
+             request.resource.data.lastUpdated is number &&
+             request.resource.data.stages is list &&
+             request.resource.data.archived is bool &&
+             request.resource.data.judgmentTimeline is list &&
+             request.resource.data.userId == request.auth.uid;
+    }
+
+    function isValidTemplate() {
+      return hasRequiredFields(['id', 'name', 'description', 'stages', 'userId']) &&
+             isValidStringLength('name', 1, 200) &&
+             request.resource.data.description is string &&
+             request.resource.data.stages is list &&
+             request.resource.data.userId == request.auth.uid;
+    }
+
+    function isValidSettings() {
+      return hasRequiredFields(['userId']) &&
+             request.resource.data.userId == request.auth.uid;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+    match /users/{userId}/matters/{matterId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidMatter() && uidUnchanged();
+      allow update: if isOwner(userId) && isValidMatter() && uidNotModified();
+      allow delete: if isOwner(userId);
+    }
+
+    match /users/{userId}/templates/{templateId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidTemplate() && uidUnchanged();
+      allow update: if isOwner(userId) && isValidTemplate() && uidNotModified();
+      allow delete: if isOwner(userId);
+    }
+
+    match /users/{userId}/settings/{settingId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidSettings() && uidUnchanged();
+      allow update: if isOwner(userId) && isValidSettings() && uidNotModified();
+      allow delete: if isOwner(userId);
+    }
+  }
+}

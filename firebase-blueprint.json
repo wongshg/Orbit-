@@ -1,0 +1,79 @@
+{
+  "entities": {
+    "Matter": {
+      "title": "Matter",
+      "description": "A legal operation matter",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string" },
+        "dueDate": { "type": "number" },
+        "createdAt": { "type": "number" },
+        "lastUpdated": { "type": "number" },
+        "stages": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "archived": { "type": "boolean" },
+        "dismissedAttentionIds": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "judgmentTimeline": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "currentSituation": { "type": "string" },
+        "overallStatus": { "type": "string" },
+        "latestAnalysis": { "type": "object" },
+        "analysisHistory": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "title", "type", "createdAt", "lastUpdated", "stages", "archived", "judgmentTimeline", "userId"]
+    },
+    "Template": {
+      "title": "Template",
+      "description": "A template for a legal operation matter",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "stages": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "name", "description", "stages", "userId"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "User settings",
+      "type": "object",
+      "properties": {
+        "geminiApiKey": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["userId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/matters/{matterId}": {
+      "schema": { "$ref": "#/entities/Matter" },
+      "description": "Matters owned by the user"
+    },
+    "/users/{userId}/templates/{templateId}": {
+      "schema": { "$ref": "#/entities/Template" },
+      "description": "Templates owned by the user"
+    },
+    "/users/{userId}/settings/profile": {
+      "schema": { "$ref": "#/entities/Settings" },
+      "description": "User settings"
+    }
+  }
+}
